@@ -1,15 +1,18 @@
 import gradio as gr
 import spaces
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-translator = pipeline("translation", model="Helsinki-NLP/opus-mt-zh-en")
+MODEL_NAME = "Helsinki-NLP/opus-mt-zh-en"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
 
 @spaces.GPU
 def translate(text):
     if not text.strip():
         return "請輸入要翻譯的中文"
-    result = translator(text, max_length=512)
-    return result[0]["translation_text"]
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    outputs = model.generate(**inputs, max_new_tokens=512)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 demo = gr.Interface(
     fn=translate,

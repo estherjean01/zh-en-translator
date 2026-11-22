@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智慧雙向翻譯工作站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-language text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900">AI 智慧雙向翻譯工作站</h1>
+                    <p class="text-xs text-slate-500">支援中英互譯．語音朗讀．情境範例</p>
+                </div>
+            </div>
+            <span class="text-xs font-medium bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-100">
+                Vercel Cloud Edition
+            </span>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        
+        <!-- 語言切換控制列 -->
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 flex-1 justify-center sm:justify-start">
+                <select id="sourceLang" class="bg-slate-100 border-none text-slate-700 font-semibold rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="zh-TW">🇹🇼 繁體中文</option>
+                    <option value="en">🇺🇸 英文 (English)</option>
+                    <option value="ja">🇯🇵 日文 (日本語)</option>
+                </select>
+
+                <button onclick="swapLanguages()" title="互換語言" class="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition">
+                    <i class="fa-solid fa-right-left"></i>
+                </button>
+
+                <select id="targetLang" class="bg-slate-100 border-none text-slate-700 font-semibold rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="en">🇺🇸 英文 (English)</option>
+                    <option value="zh-TW">🇹🇼 繁體中文</option>
+                    <option value="ja">🇯🇵 日文 (日本語)</option>
+                </select>
+            </div>
+
+            <button onclick="translateText()" id="translateBtn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-xl shadow-sm transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>立即翻譯</span>
+            </button>
+        </div>
+
+        <!-- 雙欄翻譯框 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 左側：輸入區 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden focus-within:border-indigo-400 transition">
+                <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">原文輸入</span>
+                    <button onclick="clearText()" class="text-xs text-slate-400 hover:text-red-500 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i>清空
+                    </button>
+                </div>
+                <textarea id="inputText" rows="7" oninput="updateCharCount()"
+                    class="w-full p-4 text-slate-800 resize-none outline-none text-base leading-relaxed"
+                    placeholder="請在此輸入想要翻譯的文字..."></textarea>
+                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                    <button onclick="speakText('input')" class="hover:text-indigo-600 transition flex items-center space-x-1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>朗讀原文</span>
+                    </button>
+                    <span id="charCount">0 字元</span>
+                </div>
+            </div>
+
+            <!-- 右側：輸出區 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <span class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">翻譯結果</span>
+                    <span id="statusTag" class="text-xs text-slate-400">準備就緒</span>
+                </div>
+                <div id="outputText" class="w-full p-4 text-slate-800 flex-1 min-h-[184px] text-base leading-relaxed whitespace-pre-wrap select-all"></div>
+                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <button onclick="speakText('output')" class="hover:text-indigo-600 transition flex items-center space-x-1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>朗讀譯文</span>
+                    </button>
+                    <button onclick="copyResult()" id="copyBtn" class="hover:text-indigo-600 transition flex items-center space-x-1 font-medium">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>複製結果</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 情境快速範例區 -->
+        <div class="mt-8">
+            <h2 class="text-sm font-semibold text-slate-600 mb-3 flex items-center">
+                <i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i>快速套用測試範例
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button onclick="useExample('今天天氣很好，我們一起去公園散步吧。', 'zh-TW', 'en')" 
+                    class="text-left p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl transition">
+                    <span class="text-xs font-semibold text-indigo-600 block mb-1">日常對話．中翻英</span>
+                    <p class="text-xs text-slate-600 truncate">今天天氣很好，我們一起去公園散步吧。</p>
+                </button>
+                <button onclick="useExample('感謝您的來信，我們將於本週五前完成專案進度報告並回傳給您。', 'zh-TW', 'en')" 
+                    class="text-left p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl transition">
+                    <span class="text-xs font-semibold text-emerald-600 block mb-1">商務書信．中翻英</span>
+                    <p class="text-xs text-slate-600 truncate">感謝您的來信，我們將於本週五前完成專案進度報告...</p>
+                </button>
+                <button onclick="useExample('Artificial intelligence is transforming modern software development workflows.', 'en', 'zh-TW')" 
+                    class="text-left p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl transition">
+                    <span class="text-xs font-semibold text-purple-600 block mb-1">科技文章．英翻中</span>
+                    <p class="text-xs text-slate-600 truncate">Artificial intelligence is transforming modern software...</p>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function updateCharCount() {
+            const text = document.getElementById('inputText').value;
+            document.getElementById('charCount').innerText = `${text.length} 字元`;
+        }
+
+        function clearText() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').innerText = '';
+            updateCharCount();
+        }
+
+        function swapLanguages() {
+            const source = document.getElementById('sourceLang');
+            const target = document.getElementById('targetLang');
+            const temp = source.value;
+            source.value = target.value;
+            target.value = temp;
+
+            const input = document.getElementById('inputText');
+            const output = document.getElementById('outputText');
+            if (output.innerText.trim()) {
+                input.value = output.innerText;
+                output.innerText = '';
+                updateCharCount();
+                translateText();
+            }
+        }
+
+        function useExample(text, src, tgt) {
+            document.getElementById('sourceLang').value = src;
+            document.getElementById('targetLang').value = tgt;
+            document.getElementById('inputText').value = text;
+            updateCharCount();
+            translateText();
+        }
+
+        async function translateText() {
+            const text = document.getElementById('inputText').value.trim();
+            const source = document.getElementById('sourceLang').value;
+            const target = document.getElementById('targetLang').value;
+            const outputDiv = document.getElementById('outputText');
+            const statusTag = document.getElementById('statusTag');
+            const btn = document.getElementById('translateBtn');
+
+            if (!text) {
+                outputDiv.innerText = '請先在左側輸入要翻譯的內容。';
+                return;
+            }
+
+            if (source === target) {
+                outputDiv.innerText = text;
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>翻譯中...</span>';
+            statusTag.innerText = '正在連線翻譯引擎...';
+
+            try {
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data && data.responseData && data.responseData.translatedText) {
+                    outputDiv.innerText = data.responseData.translatedText;
+                    statusTag.innerText = '翻譯完成';
+                } else {
+                    outputDiv.innerText = '翻譯服務暫時無回應，請稍後再試。';
+                    statusTag.innerText = '連線異常';
+                }
+            } catch (error) {
+                outputDiv.innerText = '發生網路錯誤，請檢查網路連線後重試。';
+                statusTag.innerText = '錯誤';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i><span>立即翻譯</span>';
+            }
+        }
+
+        function copyResult() {
+            const text = document.getElementById('outputText').innerText;
+            if (!text) return;
+            navigator.clipboard.writeText(text);
+            const btn = document.getElementById('copyBtn');
+            btn.innerHTML = '<i class="fa-solid fa-check text-emerald-600"></i><span class="text-emerald-600">已複製</span>';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy"></i><span>複製結果</span>';
+            }, 2000);
+        }
+
+        function speakText(type) {
+            const text = type === 'input' 
+                ? document.getElementById('inputText').value 
+                : document.getElementById('outputText').innerText;
+            const lang = type === 'input' 
+                ? document.getElementById('sourceLang').value 
+                : document.getElementById('targetLang').value;
+
+            if (!text.trim()) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
